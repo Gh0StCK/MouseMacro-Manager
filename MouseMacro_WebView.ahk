@@ -1950,7 +1950,7 @@ PublishWebState(*) {
         . ',"playing":' (IsPlaying ? 'true' : 'false')
         . ',"status":' WebJsonQuote(StatusText.Text)
         . ',"version":' WebJsonQuote(AppVersion())
-        . ',"macros":['
+        . ',"macros":[''
     for macro in Macros {
         if (A_Index > 1)
             result .= ","
