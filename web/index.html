@@ -143,7 +143,7 @@ function render(){
  $('#play').disabled=!macro||busy;
  ['rename','rekey','copy','delete'].forEach(id=>$('#'+id).disabled=!macro||busy);
  document.querySelectorAll('[data-action]').forEach(b=>{
-  if(!b.id && !['new','help','exit','finish','cancelRecord','play','rename','rekey','copy','deleteMacro'].includes(b.dataset.action)) b.disabled=!macro||busy;
+  if(!b.id && !['new','help','about','checkUpdate','exit','finish','cancelRecord','play','rename','rekey','copy','deleteMacro'].includes(b.dataset.action)) b.disabled=!macro||busy;
  });
  $('#side-status').textContent='v'+(S.version||'—')+' • '+(S.playing?'F9 — остановить воспроизведение':S.recording?'Ctrl+Alt+R — сохранить • Ctrl+Alt+Esc — отменить':'Ctrl+Alt+R — запись • F9 — стоп');
 }
