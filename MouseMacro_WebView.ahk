@@ -1950,7 +1950,7 @@ PublishWebState(*) {
         . ',"playing":' (IsPlaying ? 'true' : 'false')
         . ',"status":' WebJsonQuote(StatusText.Text)
         . ',"version":' WebJsonQuote(AppVersion())
-        . ',"macros":[
+        . ',"macros":['
     for macro in Macros {
         if (A_Index > 1)
             result .= ","
@@ -2052,7 +2052,7 @@ PollAppUpdates(*) {
         return
     }
     try {
-        if (UpdateCheckRequest.ReadyState != 4) {
+        if !UpdateCheckRequest.WaitForResponse(0) {
             if (A_TickCount - UpdateCheckStartedAt > 15000)
                 throw Error("Превышено время ожидания ответа GitHub.")
             return
