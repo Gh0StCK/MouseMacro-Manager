@@ -70,6 +70,8 @@ global PendingCopyId := 0
 global WebGui := ""
 global WebLastState := ""
 global StepUndoHistory := []
+global UpdateCheckRequest := ""
+global UpdateCheckStartedAt := 0
 
 
 OnExit(ReleaseMouseGuard)
@@ -1947,7 +1949,8 @@ PublishWebState(*) {
         . ',"recording":' (IsRecording ? 'true' : 'false')
         . ',"playing":' (IsPlaying ? 'true' : 'false')
         . ',"status":' WebJsonQuote(StatusText.Text)
-        . ',"macros":['
+        . ',"version":' WebJsonQuote(AppVersion())
+        . ',"macros":[
     for macro in Macros {
         if (A_Index > 1)
             result .= ","
@@ -2005,11 +2008,100 @@ WebReport(message) {
     try WebGui.PostWebMessageAsJson('{"type":"toast","text":' WebJsonQuote(message) '}')
 }
 
+AppVersion() {
+    try return Trim(FileRead(A_ScriptDir "\VERSION.txt", "UTF-8"))
+    catch return "неизвестна"
+}
+
+WebUpdateMessage(status, version := "", message := "") {
+    global WebGui
+    if !IsObject(WebGui)
+        return
+    try WebGui.PostWebMessageAsJson('{"type":"updateCheck","status":' WebJsonQuote(status)
+        . ',"version":' WebJsonQuote(version) ',"installed":' WebJsonQuote(AppVersion())
+        . ',"message":' WebJsonQuote(message) '}')
+}
+
+CheckAppUpdates() {
+    global UpdateCheckRequest, UpdateCheckStartedAt, IsRecording, IsPlaying
+    if (IsRecording || IsPlaying) {
+        WebUpdateMessage("error", "", "Сначала останови запись или воспроизведение.")
+        return
+    }
+    if IsObject(UpdateCheckRequest)
+        return
+    try {
+        req := ComObject("WinHttp.WinHttpRequest.5.1")
+        req.SetTimeouts(4000, 4000, 7000, 7000)
+        req.Open("GET", "https://raw.githubusercontent.com/Gh0StCK/MouseMacro-Manager/updates/update.json", true)
+        req.SetRequestHeader("Cache-Control", "no-cache")
+        req.Send()
+        UpdateCheckRequest := req
+        UpdateCheckStartedAt := A_TickCount
+        SetTimer(PollAppUpdates, 150)
+    } catch as err {
+        UpdateCheckRequest := ""
+        WebUpdateMessage("error", "", err.Message)
+    }
+}
+
+PollAppUpdates(*) {
+    global UpdateCheckRequest, UpdateCheckStartedAt
+    if !IsObject(UpdateCheckRequest) {
+        SetTimer(PollAppUpdates, 0)
+        return
+    }
+    try {
+        if (UpdateCheckRequest.ReadyState != 4) {
+            if (A_TickCount - UpdateCheckStartedAt > 15000)
+                throw Error("Превышено время ожидания ответа GitHub.")
+            return
+        }
+        if (UpdateCheckRequest.Status != 200)
+            throw Error("GitHub вернул HTTP " UpdateCheckRequest.Status)
+        data := UpdateCheckRequest.ResponseText
+        if !RegExMatch(data, 'i)"version"\s*:\s*"([0-9a-z.\-]+)"', &match)
+            throw Error("Некорректная версия в update.json.")
+        if !RegExMatch(data, 'i)"channel"\s*:\s*"updates"')
+            throw Error("Неверный канал обновлений.")
+        version := match[1]
+        WebUpdateMessage(version = AppVersion() ? "latest" : "available", version)
+    } catch as err {
+        WebUpdateMessage("error", "", err.Message)
+    }
+    try UpdateCheckRequest.Abort()
+    UpdateCheckRequest := ""
+    SetTimer(PollAppUpdates, 0)
+}
+
+ApplyAppUpdate() {
+    global IsRecording, IsPlaying
+    if (IsRecording || IsPlaying) {
+        WebUpdateMessage("error", "", "Сначала останови запись или воспроизведение.")
+        return
+    }
+    updater := A_ScriptDir "\Update_MouseMacro.ps1"
+    if !FileExist(updater) {
+        WebUpdateMessage("error", "", "Отсутствует Update_MouseMacro.ps1 рядом со скриптом.")
+        return
+    }
+    try {
+        Run('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "' updater '"', A_ScriptDir)
+        ExitApp()
+    } catch as err {
+        WebUpdateMessage("error", "", "Не удалось запустить обновлятор: " err.Message)
+    }
+}
+
 WebAction(view, command, a := "", b := "", c := "", d := "", e := "", f := "", g := "", h := "") {
     global SelectedId, Macros, MacroLV, StepLV, StatusText
     global IsRecording, IsPlaying, PickerOpen, PendingCopyId, WebGui, WebLastState
     try {
         switch command {
+            case "checkUpdate":
+                CheckAppUpdates()
+            case "applyUpdate":
+                ApplyAppUpdate()
             case "ready":
                 WebLastState := ""
                 PublishWebState()
