@@ -2008,12 +2008,29 @@ WebReport(message) {
     try WebGui.PostWebMessageAsJson('{"type":"toast","text":' WebJsonQuote(message) '}')
 }
 
+NormalizeAppVersion(version) {
+    ; Trim whitespace and an optional Unicode BOM before comparing versions.
+    return Trim(String(version), " `t`r`n" Chr(0xFEFF))
+}
+
 AppVersion() {
     try {
-        return Trim(FileRead(A_ScriptDir "\VERSION.txt", "UTF-8"))
+        return NormalizeAppVersion(FileRead(A_ScriptDir "\VERSION.txt", "UTF-8"))
     } catch {
         return "неизвестна"
     }
+}
+
+AppUpdateState(available, installed) {
+    available := NormalizeAppVersion(available)
+    installed := NormalizeAppVersion(installed)
+    ; Do not install on unknown or malformed version information.
+    pattern := "i)^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    if !RegExMatch(available, pattern) || !RegExMatch(installed, pattern)
+        return "error"
+    if (VerCompare(available, installed) > 0)
+        return "available"
+    return "latest"
 }
 
 WebUpdateMessage(status, version := "", message := "") {
@@ -2068,7 +2085,10 @@ PollAppUpdates(*) {
         if !RegExMatch(data, 'i)"channel"\s*:\s*"updates"')
             throw Error("Неверный канал обновлений.")
         version := match[1]
-        WebUpdateMessage(version = AppVersion() ? "latest" : "available", version)
+        state := AppUpdateState(version, AppVersion())
+        if (state = "error")
+            throw Error("Не удалось сравнить номера версий.")
+        WebUpdateMessage(state, version)
     } catch as err {
         WebUpdateMessage("error", "", err.Message)
     }
