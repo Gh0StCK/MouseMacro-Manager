@@ -2009,8 +2009,11 @@ WebReport(message) {
 }
 
 AppVersion() {
-    try return Trim(FileRead(A_ScriptDir "\VERSION.txt", "UTF-8"))
-    catch return "неизвестна"
+    try {
+        return Trim(FileRead(A_ScriptDir "\VERSION.txt", "UTF-8"))
+    } catch {
+        return "неизвестна"
+    }
 }
 
 WebUpdateMessage(status, version := "", message := "") {
