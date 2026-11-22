@@ -72,6 +72,7 @@ global WebLastState := ""
 global StepUndoHistory := []
 global UpdateCheckRequest := ""
 global UpdateCheckStartedAt := 0
+global AppUpdatePending := false
 
 
 ; Automated version-check regression test; exits before opening GUI.
@@ -2115,21 +2116,37 @@ PollAppUpdates(*) {
 }
 
 ApplyAppUpdate() {
-    global IsRecording, IsPlaying
+    global IsRecording, IsPlaying, AppUpdatePending
     if (IsRecording || IsPlaying) {
         WebUpdateMessage("error", "", "Сначала останови запись или воспроизведение.")
         return
     }
-    updater := A_ScriptDir "\Update_MouseMacro.ps1"
-    if !FileExist(updater) {
-        WebUpdateMessage("error", "", "Отсутствует Update_MouseMacro.ps1 рядом со скриптом.")
+    if AppUpdatePending
         return
-    }
+    if !FileExist(A_ScriptDir "\Update_MouseMacro.cmd")
+        return WebUpdateMessage("error", "", "Не найден Update_MouseMacro.cmd рядом с программой.")
+    if !FileExist(A_ScriptDir "\Update_MouseMacro.ps1")
+        return WebUpdateMessage("error", "", "Не найден Update_MouseMacro.ps1 рядом с программой.")
+    ; The WebView2 host-object call is synchronous. ExitApp must NOT run inside
+    ; that callback; let the HTML handler return first.
+    AppUpdatePending := true
+    SetTimer(LaunchAppUpdateAfterWebCallback, -250)
+}
+
+LaunchAppUpdateAfterWebCallback(*) {
+    global AppUpdatePending
+    if !AppUpdatePending
+        return
+    AppUpdatePending := false
+    updater := A_ScriptDir "\Update_MouseMacro.cmd"
     try {
-        Run('powershell.exe -NoProfile -ExecutionPolicy Bypass -File "' updater '"', A_ScriptDir)
+        ; Use exactly the same CMD/PowerShell updater as the working manual path.
+        ; A new console displays errors and pauses, instead of failing silently.
+        command := '"' A_ComSpec '" /c ""' updater '""'
+        Run(command, A_ScriptDir)
         ExitApp()
     } catch as err {
-        WebUpdateMessage("error", "", "Не удалось запустить обновлятор: " err.Message)
+        WebUpdateMessage("error", "", "Не удалось запустить обновление: " err.Message)
     }
 }
 
