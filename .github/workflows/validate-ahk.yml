@@ -38,5 +38,7 @@ jobs:
         run: |
           $exe = Get-ChildItem -LiteralPath "$env:RUNNER_TEMP\ahk" -Filter AutoHotkey64.exe -Recurse | Select-Object -First 1
           if (-not $exe) { throw 'AutoHotkey64.exe not found' }
-          & $exe.FullName /Validate /ErrorStdOut "$env:GITHUB_WORKSPACE\MouseMacro_WebView.ahk"
-          if ($LASTEXITCODE -ne 0) { throw "AHK syntax validation failed: $LASTEXITCODE" }
+          $out = & $exe.FullName /ErrorStdOut=UTF-8 /Validate "$env:GITHUB_WORKSPACE\MouseMacro_WebView.ahk" 2>&1
+          $code = $LASTEXITCODE
+          if ($out) { $out | ForEach-Object { Write-Host $_ } }
+          if ($code -ne 0) { throw "AHK syntax validation failed with exit code $code" }
