@@ -1,0 +1,8 @@
+# Personal data - never upload these files to a public repository.
+MouseMacro.ini
+MouseMacro.ini.bak
+MouseMacro_Images/
+Backups/
+Lib/
+*.log
+*.tmp

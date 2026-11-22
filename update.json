@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0-preview.1",
+  "channel": "updates",
+  "files": {
+    "MouseMacro_WebView.ahk": "37958ecc0d06a1bf9464a42fc8239ad89f5e4f7c8037a0cd294aa73b4ac17bad",
+    "Start_MouseMacro.ahk": "c1986e4afe0a154f7a31cee4e22ab3138a04fd9675bf116530694e1c4fff2006",
+    "web/index.html": "5cc91c979a4ded3b070b0ca99dfb90f16b88259722e608e3120100e57dd9f899",
+    "README.txt": "ec21151b0b58503ee06e160f8b66ea05f8b27c260a9c829ffd819f484063f6d4",
+    "TEST_REPORT.txt": "22954338f201fa1b792f8e9b1c1e66c484e5c40d7674700f9ed25ed327a6ecc7",
+    "Update_MouseMacro.cmd": "830e272a6a66f9628c6e05a4d13741ee9a24a569f16065f70771c1de59d4b929",
+    "Update_MouseMacro.ps1": "18f7707d23f2102e6012d4546ac1b25ff0ee80aaf41f809c01c0747dc256ecad",
+    "VERSION.txt": "b52d8845641f926c4f177b373c8296662b75f5a3f7f6053ee4c13ab6801180c8"
+  }
+}
