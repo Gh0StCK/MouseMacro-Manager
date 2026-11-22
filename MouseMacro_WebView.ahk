@@ -2025,7 +2025,7 @@ AppUpdateState(available, installed) {
     available := NormalizeAppVersion(available)
     installed := NormalizeAppVersion(installed)
     ; Do not install on unknown or malformed version information.
-    pattern := "i)^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    pattern := "i)^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$"
     if !RegExMatch(available, pattern) || !RegExMatch(installed, pattern)
         return "error"
     if (VerCompare(available, installed) > 0)
