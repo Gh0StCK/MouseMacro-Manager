@@ -1,0 +1,42 @@
+name: Validate AutoHotkey v2
+on:
+  push:
+    branches: [main, updates]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Download official AutoHotkey v2 portable
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = 'https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.29/AutoHotkey_2.0.29.zip'
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\ahk.zip"
+          $hash = (Get-FileHash "$env:RUNNER_TEMP\ahk.zip" -Algorithm SHA256).Hash
+          if ($hash -ne 'B2D0200724A6B6AD22C965C939C5E5A2C64A35D1CCB455A3CA3F8CE415C5A296') {
+            throw "AutoHotkey download checksum mismatch"
+          }
+          Expand-Archive -LiteralPath "$env:RUNNER_TEMP\ahk.zip" -DestinationPath "$env:RUNNER_TEMP\ahk"
+
+      - name: Download pinned WebViewToo library
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $revision = '53fc321984d1ad9665038950f5ef4cedd1face35'
+          Invoke-WebRequest -Uri "https://codeload.github.com/The-CoDingman/WebViewToo/zip/$revision" -OutFile "$env:RUNNER_TEMP\webviewtoo.zip"
+          Expand-Archive -LiteralPath "$env:RUNNER_TEMP\webviewtoo.zip" -DestinationPath "$env:RUNNER_TEMP\webviewtoo"
+          $lib = Join-Path "$env:RUNNER_TEMP\webviewtoo" "WebViewToo-$revision\Lib"
+          Copy-Item -LiteralPath $lib -Destination (Join-Path $env:GITHUB_WORKSPACE 'Lib') -Recurse -Force
+
+      - name: Validate source without executing macro
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -LiteralPath "$env:RUNNER_TEMP\ahk" -Filter AutoHotkey64.exe -Recurse | Select-Object -First 1
+          if (-not $exe) { throw 'AutoHotkey64.exe not found' }
+          & $exe.FullName /Validate /ErrorStdOut "$env:GITHUB_WORKSPACE\MouseMacro_WebView.ahk"
+          if ($LASTEXITCODE -ne 0) { throw "AHK syntax validation failed: $LASTEXITCODE" }
