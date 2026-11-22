@@ -74,6 +74,23 @@ global UpdateCheckRequest := ""
 global UpdateCheckStartedAt := 0
 
 
+; Automated version-check regression test; exits before opening GUI.
+if (A_Args.Length > 0 && A_Args[1] = "--test-versions") {
+    samples := [
+        ["0.1.0-preview.4", "0.1.0-preview.4", "latest"],
+        ["0.1.0-preview.4", Chr(0xFEFF) "0.1.0-preview.4`r`n", "latest"],
+        ["0.1.0-preview.5", "0.1.0-preview.4", "available"],
+        ["0.1.0-preview.3", "0.1.0-preview.4", "latest"],
+        ["bad-version", "0.1.0-preview.4", "error"]
+    ]
+    for sample in samples {
+        actual := AppUpdateState(sample[1], sample[2])
+        if (actual != sample[3])
+            throw Error("Version check failed: " sample[1] " vs " sample[2] " => " actual)
+    }
+    ExitApp(0)
+}
+
 OnExit(ReleaseMouseGuard)
 LoadAll()
 BuildGui()
