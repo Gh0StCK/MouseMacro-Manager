@@ -2,7 +2,7 @@
   "version": "0.1.0-preview.2",
   "channel": "updates",
   "files": {
-    "MouseMacro_WebView.ahk": "67a438514082630db95b27fde8995672f08de21f616462cd627c566ca20fb1a3",
+    "MouseMacro_WebView.ahk": "bc00124f90abfba740cf5ba4462e4b983cf249b8cc339beea643ccede5cb9e10",
     "Start_MouseMacro.ahk": "c1986e4afe0a154f7a31cee4e22ab3138a04fd9675bf116530694e1c4fff2006",
     "web/index.html": "53f3d2df3fe71720a69409f418c0a476c6e7ca6d061cb85faef260f469d79df9",
     "README.txt": "ec21151b0b58503ee06e160f8b66ea05f8b27c260a9c829ffd819f484063f6d4",
