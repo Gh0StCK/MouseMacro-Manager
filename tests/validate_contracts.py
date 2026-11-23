@@ -24,7 +24,7 @@ node = shutil.which("node")
 check(bool(node), "Node.js is needed for JavaScript syntax checking")
 if node and len(scripts) == 1:
     result = subprocess.run([node, "--check", "-"], input=scripts[0], text=True,
-                            capture_output=True, timeout=20)
+                            encoding="utf-8", capture_output=True, timeout=20)
     check(result.returncode == 0, "JavaScript syntax: " + result.stderr.strip())
 
 # Every HTML-to-AHK bridge call must be handled by the command dispatcher.
