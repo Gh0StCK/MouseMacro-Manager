@@ -109,7 +109,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid #0067c0;outline-
 'use strict';
 const $ = (s) => document.querySelector(s);
 let S = {macros:[],selected:0,steps:[],rows:[],recording:false,playing:false,status:'Готово',version:'—'};
-let selection = [], anchor = 0, modalAction = null, previewPath = '', previewData = '', keyCaptureListener = null, keyMouseCaptureListener = null, keyWheelCaptureListener = null, keyPickerActive=false;
+let selection = [], anchor = 0, modalAction = null, previewPath = '', previewData = '', keyCaptureListener = null, keyMouseCaptureListener = null, keyMouseReleaseListener = null, keyWheelCaptureListener = null, keyPickerActive=false;
 let lastMacroMarkup = null;
 let lastStepMarkup = null; // Preserve row DOM between clicks so dblclick can fire.
 const host = !!(window.chrome && window.chrome.webview && window.chrome.webview.hostObjects);
@@ -149,7 +149,7 @@ function render(){
 }
 function closeMenus(){document.querySelectorAll('.menu-wrap.open').forEach(x=>x.classList.remove('open'))}
 function openModal(title,html,onOK,opt={}){modalAction=onOK;previewPath='';previewData='';$('#modal-title').textContent=title;$('#modal-content').innerHTML=html;$('#modal').classList.toggle('wide',!!opt.wide);$('#modal-ok').textContent=opt.okText||'Сохранить';$('#modal-ok').style.display=opt.noOK?'none':'';$('#modal-cancel').textContent=opt.cancelText||'Отмена';$('#overlay').classList.add('visible');setTimeout(()=>$('#modal-content').querySelector('input:not([type=hidden])')?.focus(),50)}
-function closeModal(){if(keyCaptureListener){window.removeEventListener('keydown',keyCaptureListener,true);keyCaptureListener=null;}if(keyMouseCaptureListener){window.removeEventListener('mousedown',keyMouseCaptureListener,true);keyMouseCaptureListener=null;}if(keyWheelCaptureListener){window.removeEventListener('wheel',keyWheelCaptureListener,true);keyWheelCaptureListener=null;}if(keyPickerActive){keyPickerActive=false;call('picker','off');}modalAction=null;$('#overlay').classList.remove('visible')}
+function closeModal(){if(keyCaptureListener){window.removeEventListener('keydown',keyCaptureListener,true);keyCaptureListener=null;}if(keyMouseCaptureListener){window.removeEventListener('mousedown',keyMouseCaptureListener,true);keyMouseCaptureListener=null;}if(keyMouseReleaseListener){window.removeEventListener('mouseup',keyMouseReleaseListener,true);window.removeEventListener('auxclick',keyMouseReleaseListener,true);keyMouseReleaseListener=null;}if(keyWheelCaptureListener){window.removeEventListener('wheel',keyWheelCaptureListener,true);keyWheelCaptureListener=null;}if(keyPickerActive){keyPickerActive=false;call('picker','off');}window.__applyCapturedMouseKey=null;modalAction=null;$('#overlay').classList.remove('visible')}
 $('#close-modal').onclick=closeModal;$('#modal-cancel').onclick=closeModal;$('#modal-ok').onclick=()=>{if(modalAction)modalAction()};
 $('#overlay').addEventListener('click',e=>{if(e.target===$('#overlay'))closeModal()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenus();closeModal()}});
@@ -240,9 +240,15 @@ function keyModal(mode){
   if(!e.ctrlKey&&!e.altKey&&!e.shiftKey)return;
   e.preventDefault();e.stopPropagation();setKey(hotkeyModifiers(e)+(e.deltaY<0?'WheelUp':'WheelDown'));
  }
- keyCaptureListener=capture;keyMouseCaptureListener=captureMouse;keyWheelCaptureListener=captureWheel;
+ function suppressMouseNavigation(e){
+  if(!keyPickerActive||!$('#overlay').classList.contains('visible'))return;
+  if(e.button===3||e.button===4){e.preventDefault();e.stopImmediatePropagation();}
+ }
+ keyCaptureListener=capture;keyMouseCaptureListener=captureMouse;keyMouseReleaseListener=suppressMouseNavigation;keyWheelCaptureListener=captureWheel;
  window.addEventListener('keydown',capture,true);
  window.addEventListener('mousedown',captureMouse,true);
+ window.addEventListener('mouseup',suppressMouseNavigation,true);
+ window.addEventListener('auxclick',suppressMouseNavigation,true);
  window.addEventListener('wheel',captureWheel,{capture:true,passive:false});
  // AHK consumes XButton events before Chromium; it supplies capturedHotkey.
  window.__applyCapturedMouseKey=setKey;
