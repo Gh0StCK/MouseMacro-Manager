@@ -191,7 +191,7 @@ document.addEventListener('keydown',e=>{
  if(browserShortcut)e.preventDefault();
 },true);
 
-function hotkeyModifiers(e){return (e.ctrlKey?'^':'')+(e.altKey?'!':'')+(e.shiftKey?'+':'');}
+function hotkeyModifiers(e){return (e.metaKey?'#':'')+(e.ctrlKey?'^':'')+(e.altKey?'!':'')+(e.shiftKey?'+':'');}
 function isProtectedKey(combo){
  if(!combo||combo.includes('#'))return true;
  const b=combo.replace(/[\^!+]/g,'').toLowerCase();
