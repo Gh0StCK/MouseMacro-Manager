@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0-preview.12",
+  "version": "0.1.0-preview.13",
   "channel": "updates",
   "files": {
     "MouseMacro_WebView.ahk": "6c8767ca79ffb58c5be586fa673a9b9fd015816fdbb3bb57321c4ff89b636680",
@@ -9,6 +9,6 @@
     "TEST_REPORT.txt": "22954338f201fa1b792f8e9b1c1e66c484e5c40d7674700f9ed25ed327a6ecc7",
     "Update_MouseMacro.cmd": "830e272a6a66f9628c6e05a4d13741ee9a24a569f16065f70771c1de59d4b929",
     "Update_MouseMacro.ps1": "089ecf09f931e5ef5e23a067bb43d6cac08edf29762f4b8434c6db7d6c2d5d3e",
-    "VERSION.txt": "d92a47142fe2895147245bb8900f9ce468f3e14670d2fadb5d6c029aeffb49e3"
+    "VERSION.txt": "2b8ab020723b927481f0f83e06c5d043c9488f9651ca3370565e251132e5ad07"
   }
 }
