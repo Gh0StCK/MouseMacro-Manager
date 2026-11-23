@@ -473,56 +473,25 @@ StartRecordingPrompt(*) {
     ShowKeyPicker("Выбери клавишу для нового действия", 0)
 }
 
+; Route native-menu and Ctrl+Alt+R commands into the same HTML hotkey picker.
+; Gui.AddHotkey does not support XButton1/XButton2/MButton or many media keys.
+PickerModeForTarget(targetId) {
+    return targetId = 0 ? "new" : targetId = -1 ? "copy" : "rekey"
+}
+
 ShowKeyPicker(title, targetId, initialKey := "") {
-    global WebGui
-    global MainGui, Macros, PickerOpen
+    global WebGui, PickerOpen
     if PickerOpen
         return
-    PickerOpen := true
-
-    ; Temporarily disable macro hotkeys so they can be pressed inside the picker.
-    for macro in Macros {
-        try Hotkey(macro.key, "Off")
+    try {
+        ShowWindow()
+        ; The HTML picker calls WebAction("picker","on") and temporarily
+        ; disables assigned hotkeys until the user confirms or cancels.
+        WebGui.PostWebMessageAsJson('{"type":"openHotkeyPicker","mode":'
+            . WebJsonQuote(PickerModeForTarget(targetId)) '}')
+    } catch as err {
+        MsgBox("Не удалось открыть окно выбора клавиши. " err.Message, "MouseMacro")
     }
-
-    picker := Gui("+Owner" WebGui.Hwnd " +AlwaysOnTop", title)
-    picker.BackColor := "F5F7FA"
-    picker.SetFont("s10 c17212C", "Segoe UI")
-    picker.AddText("xm w370", "Нажми нужную клавишу или комбинацию прямо в поле:")
-    keyCtrl := picker.AddHotkey("xm w370", initialKey)
-    picker.AddText("xm w370", "Например: F6, F8, Ctrl+F8, Alt+Q. F9 зарезервирована.")
-    ok := picker.AddButton("xm y+12 w115 Default", "Подтвердить")
-    cancel := picker.AddButton("x+10 w100", "Отмена")
-    ok.OnEvent("Click", (*) => AcceptKey(picker, keyCtrl, targetId))
-    cancel.OnEvent("Click", (*) => CloseKeyPicker(picker))
-    picker.OnEvent("Close", (*) => CloseKeyPicker(picker))
-    picker.OnEvent("Escape", (*) => CloseKeyPicker(picker))
-    picker.Show("AutoSize Center")
-    keyCtrl.Focus()
-}
-
-CloseKeyPicker(picker) {
-    global Macros, PickerOpen
-    if !PickerOpen
-        return
-    PickerOpen := false
-    picker.Destroy()
-    for macro in Macros {
-        try Hotkey(macro.key, "On")
-    }
-}
-
-AcceptKey(picker, keyCtrl, targetId) {
-    key := Trim(keyCtrl.Value)
-    if !CheckKey(key, targetId)
-        return
-    CloseKeyPicker(picker)
-    if (targetId = 0)
-        BeginNewRecording(key)
-    else if (targetId = -1)
-        CommitCopy(key)
-    else
-        ApplyNewKey(targetId, key)
 }
 
 CheckKey(key, skipId := 0) {
