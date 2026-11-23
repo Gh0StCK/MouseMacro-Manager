@@ -37,6 +37,10 @@ jobs:
         shell: pwsh
         run: python tests/validate_contracts.py
 
+      - name: Verify exact downloadable update ZIP against SHA-256 manifest
+        shell: pwsh
+        run: python tests/validate_contracts.py --check-package
+
       - name: Validate source without executing macro
         shell: pwsh
         run: |
