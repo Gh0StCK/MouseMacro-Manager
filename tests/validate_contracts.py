@@ -74,6 +74,17 @@ check("window.removeEventListener('mouseup',keyMouseReleaseListener,true)" in ht
       and "window.removeEventListener('auxclick',keyMouseReleaseListener,true)" in html,
       "Mouse capture listeners are not removed after key selection")
 
+# Mouse-bound playback must not freeze physical cursor movement.
+playback_start = ahk.find("PlayById(id, *) {")
+playback_end = ahk.find("\\nStopPlayback(", playback_start)
+if playback_end < 0:
+    playback_end = ahk.find("\\nStartMouseGuard() {", playback_start)
+playback = ahk[playback_start:playback_end] if playback_start >= 0 and playback_end > playback_start else ""
+check(bool(playback), "Playback function not found")
+check("StartMouseGuard()" not in playback,
+      "Playback still installs the hook that freezes physical mouse input")
+check("ReleaseMouseGuard()" in playback, "Playback cleanup must release old hooks")
+
 # Macro hotkeys on mouse buttons fire while the trigger is physically pressed.
 # Playback must defer until release, and F9 must cancel that pending start.
 check("if PhysicalMouseButtonHeld()" in ahk and "QueuePlaybackAfterRelease(id)" in ahk,
