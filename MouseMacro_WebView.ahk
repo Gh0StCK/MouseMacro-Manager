@@ -26,6 +26,8 @@ global SelectedId := 0
 global IsRecording := false
 global IsPlaying := false
 global StopRequested := false
+global PendingPlaybackId := 0
+global PendingPlaybackDeadline := 0
 global PickerOpen := false
 global RefreshingList := false
 global LastRecordedAt := 0
@@ -1569,12 +1571,11 @@ PlayById(id, *) {
         }
     }
 
-    ; Do not trap an already-pressed physical mouse button in the down state.
-    for button in ["LButton", "RButton", "MButton", "XButton1", "XButton2"] {
-        if GetKeyState(button, "P") {
-            StatusText.Text := "Отпусти кнопки мыши перед воспроизведением."
-            return
-        }
+    ; A mouse-bound hotkey fires on button-down. Wait asynchronously for
+    ; its release before enabling the physical mouse-blocking guard.
+    if PhysicalMouseButtonHeld() {
+        QueuePlaybackAfterRelease(id)
+        return
     }
 
     MouseGetPos(&startX, &startY)
@@ -1760,8 +1761,57 @@ ReleaseMouseGuard(*) {
 
 StopPlayback(*) {
     global IsPlaying, StopRequested
+    ; F9 also cancels playback waiting for the physical mouse-button release.
+    CancelPendingPlayback()
     if IsPlaying
         StopRequested := true
+}
+
+PhysicalMouseButtonHeld() {
+    for button in ["LButton", "RButton", "MButton", "XButton1", "XButton2"] {
+        if GetKeyState(button, "P")
+            return true
+    }
+    return false
+}
+
+CancelPendingPlayback() {
+    global PendingPlaybackId, PendingPlaybackDeadline
+    PendingPlaybackId := 0
+    PendingPlaybackDeadline := 0
+    SetTimer(PlayPendingAfterRelease, 0)
+}
+
+QueuePlaybackAfterRelease(id) {
+    global PendingPlaybackId, PendingPlaybackDeadline, StatusText
+    PendingPlaybackId := id
+    PendingPlaybackDeadline := A_TickCount + 5000
+    StatusText.Text := "Отпусти кнопку мыши для запуска макроса. F9 — отмена."
+    SetTimer(PlayPendingAfterRelease, 20)
+}
+
+PlayPendingAfterRelease(*) {
+    global PendingPlaybackId, PendingPlaybackDeadline
+    global IsRecording, IsPlaying, PickerOpen, StatusText
+    id := PendingPlaybackId
+    if !id {
+        SetTimer(PlayPendingAfterRelease, 0)
+        return
+    }
+    if (IsRecording || IsPlaying || PickerOpen) {
+        CancelPendingPlayback()
+        return
+    }
+    if (A_TickCount > PendingPlaybackDeadline) {
+        CancelPendingPlayback()
+        StatusText.Text := "Запуск отменён: кнопка мыши не была отпущена."
+        return
+    }
+    if PhysicalMouseButtonHeld()
+        return
+    CancelPendingPlayback()
+    ; Run outside the originating mouse-hotkey callback and only after release.
+    PlayById(id)
 }
 
 TrySaveAll() {
