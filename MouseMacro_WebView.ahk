@@ -904,17 +904,26 @@ DeleteSelected(*) {
         return
     if (MsgBox("Удалить действие «" macro.name "» вместе со всеми шагами?", "MouseMacro", "YesNo Icon?") != "Yes")
         return
-    try Hotkey(macro.key, "Off")
+    removedAt := 0
     for index, item in Macros {
         if (item.id = macro.id) {
-            Macros.RemoveAt(index)
+            removedAt := index
             break
         }
     }
+    if !removedAt
+        return
+    try Hotkey(macro.key, "Off")
+    Macros.RemoveAt(removedAt)
     SelectedId := 0
-    TrySaveAll()
-    RefreshList()
-    StatusText.Text := "Действие удалено."
+    saved := TrySaveAll()
+    if !saved {
+        Macros.InsertAt(removedAt, macro)
+        SelectedId := macro.id
+        try Hotkey(macro.key, "On")
+    }
+    RefreshList(saved ? 0 : macro.id)
+    StatusText.Text := saved ? "Действие удалено." : "Удаление отменено: сохранить INI не удалось."
 }
 
 CopySelected(*) {
@@ -952,6 +961,7 @@ CommitCopy(key) {
     if !saved {
         try Hotkey(key, "Off")
         Macros.Pop()
+        NextId -= 1
         SelectedId := original.id
     }
     RefreshList(saved ? copy.id : original.id)
@@ -2032,11 +2042,16 @@ NormalizeAppVersion(version) {
 }
 
 AppVersion() {
+    ; Read the version once per process, not every 450 ms on UI refresh.
+    static version := ""
+    if (version != "")
+        return version
     try {
-        return NormalizeAppVersion(FileRead(A_ScriptDir "\VERSION.txt", "UTF-8"))
+        version := NormalizeAppVersion(FileRead(A_ScriptDir "\VERSION.txt", "UTF-8"))
     } catch {
-        return "неизвестна"
+        version := "неизвестна"
     }
+    return version
 }
 
 AppUpdateState(available, installed) {
@@ -2199,7 +2214,10 @@ WebAction(view, command, a := "", b := "", c := "", d := "", e := "", f := "", g
             case "recordExtra":
                 AddStepsToSelected()
             case "play":
-                PlaySelected()
+                ; Return the synchronous WebView2 bridge callback before executing
+                ; a possibly long macro; F9 and UI state remain responsive.
+                if !IsRecording && !IsPlaying && !PickerOpen
+                    SetTimer(PlaySelected, -30)
             case "stop":
                 StopPlayback()
             case "rename":
@@ -2411,6 +2429,8 @@ WebSaveImage(kind, rawPath, timeoutRaw, variationRaw, mouseButton, delayRaw, edi
     if (row < 1 || row > macro.events.Length)
         row := 0
     if !row {
+        if (macro.events.Length >= 10000)
+            return WebReport("Нельзя добавить шаг: достигнут предел 10000 шагов.")
         selectedRow := StepLV.GetNext()
         if (selectedRow && StepLV.GetNext(selectedRow))
             return WebReport("Для вставки выбери один шаг или сними выделение.")
