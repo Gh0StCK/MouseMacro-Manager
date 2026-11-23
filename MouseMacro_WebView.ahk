@@ -183,8 +183,10 @@ WebWindowIsActive() {
 }
 
 MouseHotkeyModifiers() {
-    ; Preserve physical Ctrl / Alt / Shift in a canonical AHK hotkey string.
-    return (GetKeyState("Ctrl", "P") ? "^" : "")
+    ; Include Win in captured combinations so protected Win+mouse shortcuts
+    ; are rejected instead of silently being saved as a plain mouse button.
+    return ((GetKeyState("LWin", "P") || GetKeyState("RWin", "P")) ? "#" : "")
+        . (GetKeyState("Ctrl", "P") ? "^" : "")
         . (GetKeyState("Alt", "P") ? "!" : "")
         . (GetKeyState("Shift", "P") ? "+" : "")
 }
