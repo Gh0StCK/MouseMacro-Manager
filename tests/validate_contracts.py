@@ -42,6 +42,22 @@ cases = set(re.findall(r'\bcase\s+"([A-Za-z]\w*)":', ahk[start:end])) if end > s
 check(not (calls - cases), "Missing AHK handlers: " + str(sorted(calls - cases)))
 check("case \"applyUpdate\":" in ahk, "Update command missing")
 
+# Every picker entry point must use HTML; the native Hotkey control misses mouse keys.
+check("picker.AddHotkey(" not in ahk,
+      "Native Hotkey input still used instead of mouse-aware picker")
+show_picker = re.search(r"ShowKeyPicker\(title, targetId, initialKey := \"\"\)\s*\{(.*?)\n\}", ahk, re.S)
+check(bool(show_picker) and "openHotkeyPicker" in show_picker.group(1),
+      "Native entry points not routed to HTML hotkey picker")
+check("d.type==='openHotkeyPicker'" in html and "keyModal(mode)" in html,
+      "WebView is missing native-to-HTML hotkey-picker message handler")
+check("d.type==='capturedHotkey'" in html,
+      "Mouse buttons are not forwarded to the picker")
+check('case "picker":' in ahk, "Hotkey picker state not managed by AHK")
+check('ShowKeyPicker("Выбери клавишу для нового действия", 0)' in ahk,
+      "Ctrl+Alt+R entry path no longer opens hotkey picker")
+check("function keyModal(mode)" in html,
+      "Shared HTML key picker no longer exists")
+
 # Mouse side-button capture must survive focus loss while selecting a hotkey.
 picker_hotkeys = re.search(r"#HotIf PickerOpen\s*(.*?)#HotIf", ahk, re.S)
 check(bool(picker_hotkeys), "Missing global mouse hotkeys during key selection")
