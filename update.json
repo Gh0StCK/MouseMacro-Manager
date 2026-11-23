@@ -2,13 +2,13 @@
   "version": "0.1.0-preview.8",
   "channel": "updates",
   "files": {
-    "MouseMacro_WebView.ahk": "0ecad4b72e3bc4065bc5f8009872b4987835ea122c948b5cbdf6b8a0000ea1d7",
-    "Start_MouseMacro.ahk": "c1986e4afe0a154f7a31cee4e22ab3138a04fd9675bf116530694e1c4fff2006",
-    "web/index.html": "45e8fd44430ee4240615efec103a4bb8b9d1299ec984e3501afd9f005fddf583",
-    "README.txt": "ec21151b0b58503ee06e160f8b66ea05f8b27c260a9c829ffd819f484063f6d4",
-    "TEST_REPORT.txt": "22954338f201fa1b792f8e9b1c1e66c484e5c40d7674700f9ed25ed327a6ecc7",
-    "Update_MouseMacro.cmd": "830e272a6a66f9628c6e05a4d13741ee9a24a569f16065f70771c1de59d4b929",
-    "Update_MouseMacro.ps1": "089ecf09f931e5ef5e23a067bb43d6cac08edf29762f4b8434c6db7d6c2d5d3e",
-    "VERSION.txt": "19e35dc8b787064600bda4f02f7498347b58a45070238548b4da2105e79df2d9"
+    "MouseMacro_WebView.ahk": "2a916dfef112e574578ba2e72c368480243afca9b7142a66006fc4bc90b06a50",
+    "Start_MouseMacro.ahk": "a3d4aebd328799e27dff63f770fb016334fe4da30102190b6b846f18637ee4fc",
+    "web/index.html": "0bb6c1939a75d9e867b3bb72bfbb0d04f845bcc01191d10f746571f8e29608a6",
+    "README.txt": "24a22c835efcd5a8783e5f2d3d78cf331264b63c794cd45cec1e6e18027207ef",
+    "TEST_REPORT.txt": "ad63ac2f89a329e1e45da89d48edc95f5b62f2d7720da782e78b03d6f46e10f7",
+    "Update_MouseMacro.cmd": "dcd773c1f7f6d4b46b3a2964fccfb9555c0aad852e05455b86843120906665ca",
+    "Update_MouseMacro.ps1": "a6468df7c0faf6196679de51aa917bfa6abeb2c9813c2b45c46697f3d640276e",
+    "VERSION.txt": "c05457fc23d44250338ff4bb8075e08ab4894df9537afb79c84c3236d98a5ce1"
   }
 }
