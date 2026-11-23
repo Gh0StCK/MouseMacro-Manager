@@ -33,6 +33,10 @@ jobs:
           $lib = Join-Path "$env:RUNNER_TEMP\webviewtoo" "WebViewToo-$revision\Lib"
           Copy-Item -LiteralPath $lib -Destination (Join-Path $env:GITHUB_WORKSPACE 'Lib') -Recurse -Force
 
+      - name: Verify JS syntax and HTML-to-AHK bridge
+        shell: pwsh
+        run: python tests/validate_contracts.py
+
       - name: Validate source without executing macro
         shell: pwsh
         run: |
