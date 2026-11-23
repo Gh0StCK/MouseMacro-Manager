@@ -74,6 +74,15 @@ check("window.removeEventListener('mouseup',keyMouseReleaseListener,true)" in ht
       and "window.removeEventListener('auxclick',keyMouseReleaseListener,true)" in html,
       "Mouse capture listeners are not removed after key selection")
 
+# Macro hotkeys on mouse buttons fire while the trigger is physically pressed.
+# Playback must defer until release, and F9 must cancel that pending start.
+check("if PhysicalMouseButtonHeld()" in ahk and "QueuePlaybackAfterRelease(id)" in ahk,
+      "Mouse hotkey still refuses to start rather than waiting for release")
+check("PlayPendingAfterRelease" in ahk and "SetTimer(PlayPendingAfterRelease, 20)" in ahk,
+      "Mouse release callback/timer missing")
+check("CancelPendingPlayback()" in ahk,
+      "Pending mouse-hotkey launch cannot be cancelled with F9")
+
 # The route to updates must be unique; About is informational.
 check(html.count('data-action="checkUpdate"') == 1, "Duplicate update menu entry")
 about_pos = html.find("if(action==='about')")
