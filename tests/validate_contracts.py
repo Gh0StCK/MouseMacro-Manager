@@ -76,9 +76,7 @@ check("window.removeEventListener('mouseup',keyMouseReleaseListener,true)" in ht
 
 # Mouse-bound playback must not freeze physical cursor movement.
 playback_start = ahk.find("PlayById(id, *) {")
-playback_end = ahk.find("\\nStopPlayback(", playback_start)
-if playback_end < 0:
-    playback_end = ahk.find("\\nStartMouseGuard() {", playback_start)
+playback_end = ahk.find("StartMouseGuard() {", playback_start)
 playback = ahk[playback_start:playback_end] if playback_start >= 0 and playback_end > playback_start else ""
 check(bool(playback), "Playback function not found")
 check("StartMouseGuard()" not in playback,
