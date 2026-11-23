@@ -134,6 +134,12 @@ if (A_Args.Length > 0 && A_Args[1] = "--test-core") {
         if !CheckKey(key)
             throw Error("Valid hotkey rejected: " key)
     }
+    ; F9 must cancel a macro scheduled to start after a mouse-button release.
+    PendingPlaybackId := 42
+    PendingPlaybackDeadline := A_TickCount + 5000
+    StopPlayback()
+    if (PendingPlaybackId != 0 || PendingPlaybackDeadline != 0)
+        throw Error("F9 failed to cancel queued mouse-hotkey playback.")
     } catch as err {
         FileAppend(err.Message "`n" err.Stack, A_Temp "\\MouseMacro_core_test_error.log", "UTF-8")
         ExitApp(1)
