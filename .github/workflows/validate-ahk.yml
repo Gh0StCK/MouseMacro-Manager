@@ -54,8 +54,14 @@ jobs:
           $exe = Get-ChildItem -LiteralPath "$env:RUNNER_TEMP\ahk" -Filter AutoHotkey64.exe -Recurse | Select-Object -First 1
           $stderr = Join-Path $env:RUNNER_TEMP 'core_test_errors.txt'
           $script = Join-Path $env:GITHUB_WORKSPACE 'MouseMacro_WebView.ahk'
-          $p = Start-Process -FilePath $exe.FullName -ArgumentList @('/ErrorStdOut=UTF-8', "`"$script`"", '--test-core') -Wait -PassThru -RedirectStandardError $stderr
+          $p = Start-Process -FilePath $exe.FullName -ArgumentList @('/ErrorStdOut=UTF-8', "`"$script`"", '--test-core') -PassThru -RedirectStandardError $stderr
+          if (-not $p.WaitForExit(15000)) {
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            throw 'Core AHK tests timed out after 15 seconds.'
+          }
           if (Test-Path $stderr) { Get-Content $stderr | ForEach-Object { Write-Host $_ } }
+          $debug = Join-Path $env:TEMP 'MouseMacro_core_test_error.log'
+          if (Test-Path $debug) { Get-Content $debug | ForEach-Object { Write-Host $_ } }
           if ($p.ExitCode -ne 0) { throw "Mouse event contract tests failed: $($p.ExitCode)" }
 
       - name: Test update version comparisons
