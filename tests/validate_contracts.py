@@ -42,6 +42,22 @@ cases = set(re.findall(r'\bcase\s+"([A-Za-z]\w*)":', ahk[start:end])) if end > s
 check(not (calls - cases), "Missing AHK handlers: " + str(sorted(calls - cases)))
 check("case \"applyUpdate\":" in ahk, "Update command missing")
 
+# Mouse side-button capture must survive focus loss while selecting a hotkey.
+picker_hotkeys = re.search(r"#HotIf PickerOpen\s*(.*?)#HotIf", ahk, re.S)
+check(bool(picker_hotkeys), "Missing global mouse hotkeys during key selection")
+if picker_hotkeys:
+    for button in ("XButton1", "XButton2", "MButton"):
+        check(f"*{button}::OnWebSideButton(\"{button}\")" in picker_hotkeys.group(1),
+              "Picker cannot capture " + button)
+check("WebWindowIsActive() && !PickerOpen" in ahk,
+      "Foreground mouse handler must exclude active hotkey picker")
+check("window.addEventListener('mouseup',suppressMouseNavigation,true)" in html
+      and "window.addEventListener('auxclick',suppressMouseNavigation,true)" in html,
+      "Browser side-button navigation not suppressed during key capture")
+check("window.removeEventListener('mouseup',keyMouseReleaseListener,true)" in html
+      and "window.removeEventListener('auxclick',keyMouseReleaseListener,true)" in html,
+      "Mouse capture listeners are not removed after key selection")
+
 # The route to updates must be unique; About is informational.
 check(html.count('data-action="checkUpdate"') == 1, "Duplicate update menu entry")
 about_pos = html.find("if(action==='about')")
