@@ -95,6 +95,7 @@ if (A_Args.Length > 0 && A_Args[1] = "--test-versions") {
 
 ; Core data regression tests run with AHK v2 without opening Windows GUI.
 if (A_Args.Length > 0 && A_Args[1] = "--test-core") {
+    try {
     cases := [
         ["100|LButton|40|55", "click", 100],
         ["25|RButton|-30|122", "click", 25],
@@ -121,6 +122,10 @@ if (A_Args.Length > 0 && A_Args[1] = "--test-core") {
     cloned[2].x := 900
     if (original[1].delay != 250 || original[2].x != 4)
         throw Error("Cloned steps unexpectedly mutated source data.")
+    } catch as err {
+        FileAppend(err.Message "`n" err.Stack, A_Temp "\\MouseMacro_core_test_error.log", "UTF-8")
+        ExitApp(1)
+    }
     ExitApp(0)
 }
 
