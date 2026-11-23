@@ -92,6 +92,38 @@ if (A_Args.Length > 0 && A_Args[1] = "--test-versions") {
     ExitApp(0)
 }
 
+
+; Core data regression tests run with AHK v2 without opening Windows GUI.
+if (A_Args.Length > 0 && A_Args[1] = "--test-core") {
+    cases := [
+        ["100|LButton|40|55", "click", 100],
+        ["25|RButton|-30|122", "click", 25],
+        ["15|MButton|0|0", "click", 15],
+        ["18|WheelDown|-120|900", "wheel", 18],
+        ["S|22|WheelUp|10|20", "wheel", 22],
+        ["W|500|10000|5|example.png", "wait_image", 500]
+    ]
+    for test in cases {
+        ; Historical click format has no explicit kind prefix.
+        record := ParseStep(test[1])
+        if !IsObject(record)
+            throw Error("Could not parse event: " test[1])
+        if (StepKind(record) != test[2] || record.delay != test[3])
+            throw Error("Incorrect parsed event: " test[1])
+    }
+    for invalid in ["", "bad-data", "S|10|WheelLeft|0|0", "W|12|bad|0|x.png", "3|Invalid|2|3"] {
+        if IsObject(ParseStep(invalid))
+            throw Error("Unexpectedly accepted invalid event: " invalid)
+    }
+    original := [{delay: 250, button: "LButton", x: 2, y: 3}, {type: "wheel", delay: 20, button: "WheelUp", x: 4, y: 5}]
+    cloned := CloneMacroSteps(original)
+    cloned[1].delay := 999
+    cloned[2].x := 900
+    if (original[1].delay != 250 || original[2].x != 4)
+        throw Error("Cloned steps unexpectedly mutated source data.")
+    ExitApp(0)
+}
+
 OnExit(ReleaseMouseGuard)
 LoadAll()
 BuildGui()
