@@ -1598,9 +1598,9 @@ PlayById(id, *) {
     imageSizes := Map()
 
     try {
-        ; Block only PHYSICAL mouse movements, clicks and wheel events.
-        ; Script-generated mouse events are still allowed; keyboard/F9 still works.
-        StartMouseGuard()
+        ; Keep physical mouse input available throughout playback.
+        ; The macro still moves the cursor for each recorded click, but no
+        ; low-level mouse hook blocks the user during long delays or waits.
         Loop repeatCount {
             targetTick := A_TickCount
             for event in macro.events {
