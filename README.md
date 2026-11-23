@@ -1,42 +1,34 @@
 # MouseMacro Manager
 
-Локальный менеджер макросов мыши для Windows на **AutoHotkey v2** с интерфейсом **WebView2 (HTML/CSS/JavaScript)**.
+A local mouse macro manager for Windows, built with **AutoHotkey v2** and a **WebView2 (HTML/CSS/JavaScript)** interface.
 
-## Возможности
+## Features
 
-- Запись и воспроизведение кликов и вертикальной прокрутки мыши; паузы и координаты.
-- Несколько макросов с настраиваемыми горячими клавишами.
-- Редактор шагов, массовое изменение пауз, дублирование, удаление и отмена изменений.
-- Ожидание появления изображения (штатный `ImageSearch`); поиск с автоматическим кликом удалён из новых шагов.
-- Аварийная остановка воспроизведения — **F9**.
+- Record and replay mouse clicks and vertical scrolling, including delays and screen coordinates.
+- Manage multiple macros with customizable hotkeys.
+- Edit, duplicate, delete, and undo steps; change delays for multiple selected steps at once.
+- Wait for an image to appear using AutoHotkey's built-in `ImageSearch`. Image-based clicking is no longer available for new steps.
+- Stop macro playback immediately with **F9**.
 
-## Установка
+## Installation
 
-1. Скачайте ZIP исходников из ветки [`updates`](../../tree/updates) (Code → Download ZIP) и распакуйте в отдельную папку.
-2. Установите AutoHotkey v2 (если ещё не установлен) и убедитесь, что в Windows доступен WebView2 Runtime.
-3. Запустите `Start_MouseMacro.ahk`.
-4. При первом запуске скрипт предложит загрузить открытое ПО [WebViewToo](https://github.com/The-CoDingman/WebViewToo) (MIT) из закреплённого коммита. Установщик стороннего ПО не запускается.
+1. Download the source ZIP from the [`updates` branch](../../tree/updates) (**Code → Download ZIP**) and extract it into a separate folder.
+2. Install **AutoHotkey v2** if needed, and make sure **WebView2 Runtime** is available on Windows.
+3. Run `Start_MouseMacro.ahk`.
+4. On first launch, the script can download the open-source [WebViewToo](https://github.com/The-CoDingman/WebViewToo) library (MIT license) from a pinned commit. No third-party installer is launched.
 
-## Обновление в один клик
+## Project files
 
-В окне приложения выберите **Справка → Проверить обновления**. Текущую версию можно увидеть в **Справка → О программе**. Если обновление найдено, подтвердите установку: программа закроется, обновлятор продолжит установку и снова запустит приложение.
+- `MouseMacro_WebView.ahk` — input recording, playback, and WebView2 integration.
+- `Start_MouseMacro.ahk` — initial WebViewToo setup and application launcher.
+- `web/index.html` — HTML/CSS/JavaScript user interface.
+- `Update_MouseMacro.ps1` and `Update_MouseMacro.cmd` — local update utilities.
+- `update.json` and `VERSION.txt` — update channel manifest and version information.
 
-Резервный вариант: дважды щёлкните `Update_MouseMacro.cmd` в папке программы. Обновлятор проверит ветку `updates`, скачает ZIP с GitHub, сверит SHA-256 каждого программного файла с `update.json`, создаст резервную копию и заменит только файлы приложения. Если программа запущена, запросит обычное завершение; при активной записи или воспроизведении её придётся закрыть самостоятельно.
+**Do not commit** `MouseMacro.ini` or `MouseMacro_Images/`. They may contain personal macro actions and local file paths. Both are excluded by `.gitignore`.
 
-**Личные данные не затрагиваются:** `MouseMacro.ini`, `MouseMacro.ini.bak`, `MouseMacro_Images/` и `Lib/` обновлятор не заменяет. Старые версии программных файлов сохраняются в `Backups/`.
+## Project status
 
-Версии для обновления публикуются отдельно: изменения в `main` сами по себе не устанавливаются. Ветка `updates` обновляется только после подготовки очередной сборки.
+This project is a preview release. Automated Windows checks cover AutoHotkey syntax, JavaScript syntax, bridge command contracts, core event data handling, version comparison, and update-package checksums. They do not replace hands-on testing of mouse recording, playback, or WebView2 behavior on a real desktop.
 
-## Для разработки
-
-- `MouseMacro_WebView.ahk` — движок ввода, воспроизведения и взаимодействия с WebView2.
-- `Start_MouseMacro.ahk` — загрузка WebViewToo при первом запуске и старт движка.
-- `web/index.html` — интерфейс HTML/CSS/JavaScript.
-- `Update_MouseMacro.ps1` и `.cmd` — локальный обновлятор.
-- `update.json` + `VERSION.txt` — манифест канала обновлений.
-
-**Не коммитьте** `MouseMacro.ini` и `MouseMacro_Images/`: там могут храниться личные действия и пути к файлам. Эти файлы исключены в `.gitignore`.
-
-## Статус
-
-Это предварительная версия. HTML и структура исходников проверялись статически, но работа всех макросов и WebView2 в реальной Windows требует тестирования. Полноценной кодовой подписи у сборки нет. Механизм обновления доверяет содержимому публичного репозитория и канала `updates`.
+The application is not code-signed. Updates rely on the integrity of the public repository and its `updates` branch.
