@@ -1,5 +1,7 @@
 """Static integration contracts for MouseMacro's HTML/WebView2/AHK bridge."""
 from pathlib import Path
+import hashlib
+import json
 import re
 import shutil
 import subprocess
@@ -51,6 +53,27 @@ for private_file in ("MouseMacro.ini", "MouseMacro_Images", "Backups"):
           "Updater targets user data: " + private_file)
 check("Get-FileHash -Algorithm SHA256" in ps1, "Update verification missing")
 check("'channel':" not in manifest, "Unexpected non-JSON manifest format")
+data = json.loads(manifest)
+check(data.get("channel") == "updates", "Unexpected update channel")
+check(data.get("version") == version, "VERSION.txt differs from update.json")
+expected_files = data.get("files", {})
+check(len(expected_files) >= 6, "Missing update manifest file entries")
+for relative_path, expected_hash in expected_files.items():
+    source_file = root / relative_path
+    check(source_file.is_file(), "Update manifest references missing file: " + relative_path)
+    if source_file.is_file():
+        actual_hash = hashlib.sha256(source_file.read_bytes()).hexdigest()
+        check(actual_hash.lower() == str(expected_hash).lower(),
+              "SHA-256 mismatch in update manifest for " + relative_path)
+
+# Reject truncated/invalid PowerShell syntax before distributing an updater.
+pwsh = shutil.which("pwsh") or shutil.which("powershell")
+if pwsh:
+    validation = "$t=$null;$e=$null;[System.Management.Automation.Language.Parser]::ParseFile(" +         "'Update_MouseMacro.ps1',[ref]$t,[ref]$e)|Out-Null;if($e){$e|Out-String|Write-Error;exit 1}"
+    result = subprocess.run([pwsh, "-NoProfile", "-Command", validation],
+                            cwd=root, text=True, encoding="utf-8",
+                            capture_output=True, timeout=20)
+    check(result.returncode == 0, "PowerShell updater parse error: " + result.stderr.strip())
 
 if errors:
     for item in errors:
