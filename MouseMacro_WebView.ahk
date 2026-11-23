@@ -100,7 +100,7 @@ if (A_Args.Length > 0 && A_Args[1] = "--test-core") {
         ["100|LButton|40|55", "click", 100],
         ["25|RButton|-30|122", "click", 25],
         ["15|MButton|0|0", "click", 15],
-        ["18|WheelDown|-120|900", "wheel", 18],
+        ["S|18|WheelDown|-120|900", "wheel", 18],
         ["S|22|WheelUp|10|20", "wheel", 22],
         ["W|500|10000|5|example.png", "wait_image", 500]
     ]
