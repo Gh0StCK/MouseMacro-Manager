@@ -1,8 +1,12 @@
 """Static integration contracts for MouseMacro's HTML/WebView2/AHK bridge."""
 from pathlib import Path
 import hashlib
+import io
 import json
+import os
 import re
+import urllib.request
+import zipfile
 import shutil
 import subprocess
 import sys
@@ -62,9 +66,35 @@ for relative_path, expected_hash in expected_files.items():
     source_file = root / relative_path
     check(source_file.is_file(), "Update manifest references missing file: " + relative_path)
     if source_file.is_file():
-        actual_hash = hashlib.sha256(source_file.read_bytes()).hexdigest()
+        # GitHub's ZIP contains Git blob bytes (LF), while Windows checkout can
+        # change line endings to CRLF. Hash the Git blob, not the worktree.
+        blob = subprocess.run(["git", "show", "HEAD:" + relative_path],
+                              cwd=root, capture_output=True, check=True).stdout
+        actual_hash = hashlib.sha256(blob).hexdigest()
         check(actual_hash.lower() == str(expected_hash).lower(),
-              "SHA-256 mismatch in update manifest for " + relative_path + ": expected " + str(expected_hash) + ", actual " + actual_hash)
+              "SHA-256 mismatch in Git blob for " + relative_path +
+              ": expected " + str(expected_hash) + ", actual " + actual_hash)
+
+# End-to-end: verify the very ZIP URL that the updater downloads.
+if "--check-package" in sys.argv:
+    commit = os.environ.get("GITHUB_SHA", "")
+    check(bool(re.fullmatch(r"[0-9a-fA-F]{40}", commit)), "Missing GITHUB_SHA")
+    if re.fullmatch(r"[0-9a-fA-F]{40}", commit):
+        url = "https://codeload.github.com/Gh0StCK/MouseMacro-Manager/zip/" + commit
+        request = urllib.request.Request(url, headers={"User-Agent": "MouseMacro-CI"})
+        with urllib.request.urlopen(request, timeout=50) as response:
+            payload = response.read()
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            for relative_path, expected_hash in expected_files.items():
+                archive_paths = [name for name in archive.namelist()
+                                 if name.endswith("/" + relative_path)]
+                check(len(archive_paths) == 1,
+                      "Expected exactly one ZIP entry for " + relative_path)
+                if len(archive_paths) == 1:
+                    actual_hash = hashlib.sha256(archive.read(archive_paths[0])).hexdigest()
+                    check(actual_hash.lower() == str(expected_hash).lower(),
+                          "ZIP SHA-256 mismatch for " + relative_path +
+                          ": expected " + str(expected_hash) + ", actual " + actual_hash)
 
 # Reject truncated/invalid PowerShell syntax before distributing an updater.
 pwsh = shutil.which("pwsh") or shutil.which("powershell")
