@@ -145,12 +145,24 @@ F9::StopPlayback()
 ~*WheelUp::RecordClick("WheelUp")
 ~*WheelDown::RecordClick("WheelDown")
 
-; While the HTML window is focused, side buttons must NOT navigate WebView2.
-; They still work as assignable global macro hotkeys outside this window.
-#HotIf WebWindowIsActive()
+; Mouse-key capture must stay active while the hotkey picker is open,
+; even if a mouse driver briefly shifts focus away from WebView2.
+#HotIf PickerOpen
 *XButton1::OnWebSideButton("XButton1")
 *XButton2::OnWebSideButton("XButton2")
 *MButton::OnWebSideButton("MButton")
+#HotIf
+
+; Outside the picker, consume side buttons only while our window is active.
+; Assigned global macro hotkeys remain usable in other applications.
+#HotIf WebWindowIsActive() && !PickerOpen
+*XButton1::OnWebSideButton("XButton1")
+*XButton2::OnWebSideButton("XButton2")
+*MButton::OnWebSideButton("MButton")
+#HotIf
+
+; Some mouse utilities generate browser-navigation keys rather than XButtons.
+#HotIf WebWindowIsActive()
 *Browser_Back::Return
 *Browser_Forward::Return
 #HotIf
