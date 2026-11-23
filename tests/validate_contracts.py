@@ -64,7 +64,7 @@ for relative_path, expected_hash in expected_files.items():
     if source_file.is_file():
         actual_hash = hashlib.sha256(source_file.read_bytes()).hexdigest()
         check(actual_hash.lower() == str(expected_hash).lower(),
-              "SHA-256 mismatch in update manifest for " + relative_path)
+              "SHA-256 mismatch in update manifest for " + relative_path + ": expected " + str(expected_hash) + ", actual " + actual_hash)
 
 # Reject truncated/invalid PowerShell syntax before distributing an updater.
 pwsh = shutil.which("pwsh") or shutil.which("powershell")
