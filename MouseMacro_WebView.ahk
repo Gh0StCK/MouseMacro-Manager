@@ -122,6 +122,16 @@ if (A_Args.Length > 0 && A_Args[1] = "--test-core") {
     cloned[2].x := 900
     if (original[1].delay != 250 || original[2].x != 4)
         throw Error("Cloned steps unexpectedly mutated source data.")
+    ; Every entry point must use the same HTML picker mode.
+    if (PickerModeForTarget(0) != "new"
+        || PickerModeForTarget(-1) != "copy"
+        || PickerModeForTarget(42) != "rekey")
+        throw Error("Hotkey-picker routing returned an incorrect mode.")
+    ; Mouse buttons and their modifier combinations must be valid macro hotkeys.
+    for key in ["XButton1", "XButton2", "MButton", "^XButton1", "!XButton2", "+MButton", "F6", "Numpad1"] {
+        if !CheckKey(key)
+            throw Error("Valid hotkey rejected: " key)
+    }
     } catch as err {
         FileAppend(err.Message "`n" err.Stack, A_Temp "\\MouseMacro_core_test_error.log", "UTF-8")
         ExitApp(1)
@@ -173,8 +183,10 @@ WebWindowIsActive() {
 }
 
 MouseHotkeyModifiers() {
-    ; Preserve physical Ctrl / Alt / Shift in a canonical AHK hotkey string.
-    return (GetKeyState("Ctrl", "P") ? "^" : "")
+    ; Include Win in captured combinations so protected Win+mouse shortcuts
+    ; are rejected instead of silently being saved as a plain mouse button.
+    return ((GetKeyState("LWin", "P") || GetKeyState("RWin", "P")) ? "#" : "")
+        . (GetKeyState("Ctrl", "P") ? "^" : "")
         . (GetKeyState("Alt", "P") ? "!" : "")
         . (GetKeyState("Shift", "P") ? "+" : "")
 }
@@ -473,56 +485,25 @@ StartRecordingPrompt(*) {
     ShowKeyPicker("Выбери клавишу для нового действия", 0)
 }
 
+; Route native-menu and Ctrl+Alt+R commands into the same HTML hotkey picker.
+; Gui.AddHotkey does not support XButton1/XButton2/MButton or many media keys.
+PickerModeForTarget(targetId) {
+    return targetId = 0 ? "new" : targetId = -1 ? "copy" : "rekey"
+}
+
 ShowKeyPicker(title, targetId, initialKey := "") {
-    global WebGui
-    global MainGui, Macros, PickerOpen
+    global WebGui, PickerOpen
     if PickerOpen
         return
-    PickerOpen := true
-
-    ; Temporarily disable macro hotkeys so they can be pressed inside the picker.
-    for macro in Macros {
-        try Hotkey(macro.key, "Off")
+    try {
+        ShowWindow()
+        ; The HTML picker calls WebAction("picker","on") and temporarily
+        ; disables assigned hotkeys until the user confirms or cancels.
+        WebGui.PostWebMessageAsJson('{"type":"openHotkeyPicker","mode":'
+            . WebJsonQuote(PickerModeForTarget(targetId)) '}')
+    } catch as err {
+        MsgBox("Не удалось открыть окно выбора клавиши. " err.Message, "MouseMacro")
     }
-
-    picker := Gui("+Owner" WebGui.Hwnd " +AlwaysOnTop", title)
-    picker.BackColor := "F5F7FA"
-    picker.SetFont("s10 c17212C", "Segoe UI")
-    picker.AddText("xm w370", "Нажми нужную клавишу или комбинацию прямо в поле:")
-    keyCtrl := picker.AddHotkey("xm w370", initialKey)
-    picker.AddText("xm w370", "Например: F6, F8, Ctrl+F8, Alt+Q. F9 зарезервирована.")
-    ok := picker.AddButton("xm y+12 w115 Default", "Подтвердить")
-    cancel := picker.AddButton("x+10 w100", "Отмена")
-    ok.OnEvent("Click", (*) => AcceptKey(picker, keyCtrl, targetId))
-    cancel.OnEvent("Click", (*) => CloseKeyPicker(picker))
-    picker.OnEvent("Close", (*) => CloseKeyPicker(picker))
-    picker.OnEvent("Escape", (*) => CloseKeyPicker(picker))
-    picker.Show("AutoSize Center")
-    keyCtrl.Focus()
-}
-
-CloseKeyPicker(picker) {
-    global Macros, PickerOpen
-    if !PickerOpen
-        return
-    PickerOpen := false
-    picker.Destroy()
-    for macro in Macros {
-        try Hotkey(macro.key, "On")
-    }
-}
-
-AcceptKey(picker, keyCtrl, targetId) {
-    key := Trim(keyCtrl.Value)
-    if !CheckKey(key, targetId)
-        return
-    CloseKeyPicker(picker)
-    if (targetId = 0)
-        BeginNewRecording(key)
-    else if (targetId = -1)
-        CommitCopy(key)
-    else
-        ApplyNewKey(targetId, key)
 }
 
 CheckKey(key, skipId := 0) {
