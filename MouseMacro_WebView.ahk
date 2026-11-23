@@ -122,6 +122,16 @@ if (A_Args.Length > 0 && A_Args[1] = "--test-core") {
     cloned[2].x := 900
     if (original[1].delay != 250 || original[2].x != 4)
         throw Error("Cloned steps unexpectedly mutated source data.")
+    ; Every entry point must use the same HTML picker mode.
+    if (PickerModeForTarget(0) != "new"
+        || PickerModeForTarget(-1) != "copy"
+        || PickerModeForTarget(42) != "rekey")
+        throw Error("Hotkey-picker routing returned an incorrect mode.")
+    ; Mouse buttons and their modifier combinations must be valid macro hotkeys.
+    for key in ["XButton1", "XButton2", "MButton", "^XButton1", "!XButton2", "+MButton", "F6", "Numpad1"] {
+        if !CheckKey(key)
+            throw Error("Valid hotkey rejected: " key)
+    }
     } catch as err {
         FileAppend(err.Message "`n" err.Stack, A_Temp "\\MouseMacro_core_test_error.log", "UTF-8")
         ExitApp(1)
