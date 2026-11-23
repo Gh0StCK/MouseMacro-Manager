@@ -79,8 +79,10 @@ playback_start = ahk.find("PlayById(id, *) {")
 playback_end = ahk.find("StartMouseGuard() {", playback_start)
 playback = ahk[playback_start:playback_end] if playback_start >= 0 and playback_end > playback_start else ""
 check(bool(playback), "Playback function not found")
-check("StartMouseGuard()" not in playback,
-      "Playback still installs the hook that freezes physical mouse input")
+check("StartMouseGuard()" in playback,
+      "Playback must install the hook that blocks physical mouse input")
+check(playback.find("StartMouseGuard()") < playback.find("Loop repeatCount"),
+      "Mouse guard must start before the playback loop")
 check("ReleaseMouseGuard()" in playback, "Playback cleanup must release old hooks")
 
 # Macro hotkeys on mouse buttons fire while the trigger is physically pressed.
